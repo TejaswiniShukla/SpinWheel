@@ -1,0 +1,32 @@
+.needle {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, 0); 
+    width: 0; 
+    height: 0; 
+    border-left: 7px solid transparent; 
+    border-right: 7px solid transparent; 
+    border-bottom: 30px solid rgb(7, 8, 7); 
+  }
+  
+  .spin-button {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(7, 8, 7);
+    color: white;
+    border: none;
+    border-radius: 50%; 
+    width: 60px; 
+    height: 60px; 
+    font-size: 20px;
+    cursor: pointer;
+    z-index: 2; 
+  }
+  
+  .spin-button:hover {
+    background-color: rgb(55, 61, 55); 
+  }
+  
