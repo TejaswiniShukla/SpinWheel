@@ -1,72 +1,180 @@
-import React, { useEffect, useState } from "react";
-import "./spinWheel.css"; 
+import React, { useState } from "react";
+import "./spinWheel.css";
+import { Wheel } from "react-custom-roulette";
+import { setTargetNumber } from "./services/apiServices";
 
-function SpinWheel({ length = 60, targetNumber = null }) {
-  const colors = ["#FF5733", "#33FF57", "#3357FF", "#F1C40F", "#8E44AD"];
-  const numberColorPairs = Array.from({ length }, (_, i) => ({
-    number: i + 1,
-    color: colors[i % colors.length],
-  }));
+function SpinWheel({ targetNumber }) {
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+  const [userInput, setUserInput] = useState("");
+  const [isValid, setIsValid] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const radius = 200;
-  const segmentAngle = 360 / length; 
-  const [spin, setSpin] = useState(0);
+  const data = Array.from({ length: 60 }, (_, i) => ({ option: `${i + 1}` }));
 
-  useEffect(() => {
-    if (targetNumber) {
-      const targetAngle = (targetNumber - 1) * segmentAngle;
-      const totalSpins = 3; 
-      setSpin(totalSpins * 360 + targetAngle);
+  const handleSpinClick = async() => {
+    if (!isValid) {
+      alert("Please enter a valid number between 1 and 60");
+      return;
     }
-  }, [targetNumber, segmentAngle]);
+    const newPrizeNumber = parseInt(userInput) - 1;
+    await setTargetNumber(newPrizeNumber);
+    setPrizeNumber(newPrizeNumber);
+    setMustSpin(true);
+
+  };
+
+  const handleChange = (e) => {
+    const value = e.target.value;
+    if (!/^\d*$/.test(value)) {
+      setErrorMessage("Only numeric values are allowed");
+      setIsValid(false);
+      setUserInput(value);
+      return;
+    }
+    setUserInput(value);
+    const number = parseInt(value);
+    if (number >= 1 && number <= 60) {
+      setIsValid(true);
+      setErrorMessage(""); 
+    } else {
+      setIsValid(false);
+      setErrorMessage("Please enter a number between 1 and 60");
+    }
+  };
 
   return (
-    <div style={{ position: "relative" }}>
-      <svg
-        width="500" 
-        height="500" 
-        style={{ transform: `rotate(${spin}deg)`, transition: "transform 4s ease-out" }}
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+      }}
+    >
+      <div style={{ marginBottom: "2rem" }}>
+        <Wheel
+          mustStartSpinning={mustSpin}
+          prizeNumber={prizeNumber}
+          data={data}
+          onStopSpinning={() => {
+            setMustSpin(false);
+          }}
+          backgroundColors={["#ff8f43", "#70bbe0", "#0b3351", "#f9dd50"]}
+          textColors={["#ffffff"]}
+          outerBorderColor="#eeeeee"
+          outerBorderWidth={10}
+          innerRadius={0}
+          innerBorderColor="#30261a"
+          innerBorderWidth={0}
+          radiusLineColor="#eeeeee"
+          radiusLineWidth={1}
+          fontSize={12}
+          perpendicularText={true}
+          spinDuration={3}
+        />
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "1rem",
+        }}
       >
-        <g transform={`translate(${250}, ${250})`}>
-          {numberColorPairs.map((e, i) => {
-            const angleStart = segmentAngle * i;
-            const angleEnd = segmentAngle * (i + 1);
-
-            const x1 = radius * Math.cos((Math.PI / 180) * angleStart);
-            const y1 = radius * Math.sin((Math.PI / 180) * angleStart);
-            const x2 = radius * Math.cos((Math.PI / 180) * angleEnd);
-            const y2 = radius * Math.sin((Math.PI / 180) * angleEnd);
-
-            return (
-              <g key={i}>
-                <path
-                  d={`M0,0 L${x1},${y1} A${radius},${radius} 0 0,1 ${x2},${y2} Z`}
-                  fill={e.color}
-                />
-                <text
-                  x={(x1 + x2) / 2 * 0.6}
-                  y={(y1 + y2) / 2 * 0.6}
-                  textAnchor="middle"
-                  fill="#fff"
-                  fontSize="14"
-                  dy=".3em"
-                  transform={`rotate(${segmentAngle * (i + 0.5)} ${(x1 + x2) / 2 * 0.6} ${(y1 + y2) / 2 * 0.6})`}
-                >
-                  {e.number}
-                </text>
-              </g>
-            );
-          })}
-        </g>
-      </svg>
-
-      <div className="needle" />
-
-      <button className="spin-button" onClick={() => setSpin(spin + 360)}>
-        Spin
-      </button>
+        <input
+          type="text"
+          min="1"
+          max="60"
+          value={userInput}
+          onChange={handleChange}
+          placeholder="Enter a number (1-60)"
+          style={{
+            width: "200px",
+            padding: "0.5rem",
+            fontSize: "1rem",
+            borderRadius: "4px",
+            border: "1px solid #ccc",
+          }}
+        />
+        {errorMessage && (
+          <div style={{ color: "red", fontSize: "0.9rem" }}>{errorMessage}</div>
+        )}
+        <button
+          onClick={handleSpinClick}
+          disabled={!isValid || mustSpin}
+          style={{
+            padding: "0.5rem 1rem",
+            fontSize: "1rem",
+            backgroundColor: !isValid || mustSpin ? "#cccccc" : "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: !isValid || mustSpin ? "not-allowed" : "pointer",
+          }}
+        >
+          {mustSpin ? "Spinning..." : "SPIN"}
+        </button>
+      </div>
     </div>
   );
 }
 
 export default SpinWheel;
+
+
+
+// function SpinWheel({ targetNumber }) {
+//   const [mustSpin, setMustSpin] = useState(false);
+//   const [prizeNumber, setPrizeNumber] = useState(0);
+//   const [userInput, setUserInput] = useState("");
+//   const [isValid, setIsValid] = useState(false);
+//   const [errorMessage, setErrorMessage] = useState("");
+
+//   const data = Array.from({ length: 60 }, (_, i) => ({ option: `${i + 1}` }));
+
+//   const fetchTarget = async () => {
+//     try {
+//       const data = await getTargetNumber();
+//       setPrizeNumber(data.target);
+//     } catch (error) {
+//       console.error("Error fetching target:", error);
+//     }
+//   };
+
+
+//   const handleSpinClick = async () => {
+//     if (!isValid) {
+//       alert("Please enter a valid number between 1 and 60");
+//       return;
+//     }
+//     const newPrizeNumber = parseInt(userInput) - 1;
+//     setMustSpin(true);
+//     const res=await setTargetNumber(newPrizeNumber);
+//     console.log(res);
+//     if(res?.success){
+//       fetchTarget();
+//     }
+//   };
+
+//   const handleChange = (e) => {
+//     const value = e.target.value;
+//     if (!/^\d*$/.test(value)) {
+//       setErrorMessage("Only numeric values are allowed");
+//       setIsValid(false);
+//       setUserInput(value);
+//       return;
+//     }
+//     setUserInput(value);
+//     const number = parseInt(value);
+//     if (number >= 1 && number <= 60) {
+//       setIsValid(true);
+//       setErrorMessage("");
+//     } else {
+//       setIsValid(false);
+//       setErrorMessage("Please enter a number between 1 and 60");
+//     }
+//   };
+
+
